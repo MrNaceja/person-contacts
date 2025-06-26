@@ -1,0 +1,27 @@
+version: '3.18'
+services:
+  # db:
+  #   container_name: db
+  #   image: postgres:13-alpine
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: backend_db00
+  #     POSTGRES_DB: postgres
+  #   ports:
+  #     - 5432:5432
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - DATABASE_URL=postgresql://postgres:backend_db00@db:5432/postgres
+    environment:
+      - DATABASE_URL=postgresql://postgres:backend_db00@db:5432/postgres
+      - PORT=3000
+      - JWT_SECRET=__sup33r@s3cr3t__
+    ports:
+      - 3000:3000
+    # depends_on:
+    #   - db
+    
