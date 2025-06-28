@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "tsx --watch src/server.ts",
     "build": "tsc && resolve-tspaths",
-    "migrate": "drizzle-kit push",
-    "start": "node ."
+    "start": "node .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "keywords": [],
   "author": "",

@@ -1,26 +1,25 @@
+# Monta a stack backend
 FROM node:22-alpine3.21 AS builder
 
 WORKDIR /app
 
 COPY package*.json .
-RUN npm i
+RUN npm ci --omit-dev
 
-COPY drizzle.config.ts .
 COPY tsconfig.json .
 COPY src ./src
 
-ARG DATABASE_URL
-ENV DATABASE_URL=${DATABASE_URL}
-
 RUN npm run build
-RUN npm run migrate
 
-FROM node:22-slim AS runner 
+# Inicia a stack backend
+FROM node:22-alpine3.21 AS runner 
 
 WORKDIR /app
 
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY /src/db/migrations ./dist/db/migrations
+COPY drizzle.config.ts ./
 
 CMD ["npm", "run", "start"]
