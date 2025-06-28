@@ -5,7 +5,7 @@ export function Layout() {
     return (
         <section className='min-h-screen flex flex-col gap-12'>
             <Header />
-            <main className='flex-1'>
+            <main className='flex-1 flex flex-col'>
                 <Outlet />
             </main>
         </section>

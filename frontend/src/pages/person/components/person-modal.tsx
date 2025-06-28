@@ -6,21 +6,8 @@ import { Check } from 'lucide-react';
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useCallback, type ChangeEvent, type PropsWithChildren } from 'react';
-import { z } from 'zod';
 import { Formatters } from '@/utils/formatters';
-
-const personSchema = z.object({
-    name: z.string().nonempty('Nome é obrigatório.'),
-    cpf: z.string().nonempty('CPF é obrigatório.')
-        .refine(cpf => {
-            return cpf.replace(/\D/g, '').length >= 11
-        }, 'CPF deve conter 11 caracteres.')
-        .refine(cpf => {
-            return !!Number(cpf.replace(/\D/g, ''))
-        }, 'CPF deve conter apenas números.')
-})
-
-type Person = z.infer<typeof personSchema>
+import { personSchema, type Person } from '@/models/person';
 
 interface PersonModal extends PropsWithChildren {
     person?: Person
