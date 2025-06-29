@@ -8,7 +8,7 @@ export const contacts = pgTable('contacts', {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     type: contactTypeEnum().notNull(),
     description: varchar({ length: 255 }).notNull(),
-    person: integer('person_id').references(() => persons.id).notNull()
+    person: integer('person_id').references(() => persons.id, { onDelete: 'cascade' }).notNull()
 })
 
 export const contactsRelationWithPerson = relations(contacts, ({ one }) => ({

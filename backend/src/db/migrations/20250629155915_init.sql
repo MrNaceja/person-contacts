@@ -20,4 +20,4 @@ CREATE TABLE "persons" (
 	CONSTRAINT "persons_cpf_unique" UNIQUE("cpf")
 );
 --> statement-breakpoint
-ALTER TABLE "contacts" ADD CONSTRAINT "contacts_person_id_persons_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."persons"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "contacts" ADD CONSTRAINT "contacts_person_id_persons_id_fk" FOREIGN KEY ("person_id") REFERENCES "public"."persons"("id") ON DELETE cascade ON UPDATE no action;
