@@ -4,23 +4,26 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Edit, LoaderCircle, Plus, Trash, UserX } from 'lucide-react';
 import { PersonModal } from '@/pages/person/components/person-modal';
-import { fetcher } from '@/utils/fetcher';
 import type { Person } from '@/models/person';
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner"
 import { useEffect } from 'react';
+import { axios } from '@/lib/axios';
 
 export function PersonPage() {
     const queryClient = useQueryClient()
     const { data: persons, isPending, isError, error } = useQuery({
         queryKey: ['persons'],
-        queryFn: async () => fetcher<Person[]>('/person')
+        queryFn: async () => {
+            const { data: personsFetched } = await axios.get<Person[]>('/person')
+            return personsFetched
+        }
     })
 
     const deletePersonMutation = useMutation({
         async mutationFn(id: Person['id']) {
-            await fetcher(`/person/${id}`, { method: 'DELETE' })
+            await axios.delete(`/person/${id}`)
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['persons'] })

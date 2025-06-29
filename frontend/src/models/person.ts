@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { Contact } from './contact'
 
-export const personSchema = z.object({
+export const personFormSchema = z.object({
     name: z.string().nonempty('Nome é obrigatório.'),
     cpf: z.string().nonempty('CPF é obrigatório.')
         .refine(cpf => {
@@ -12,7 +12,9 @@ export const personSchema = z.object({
         }, 'CPF deve conter apenas números.')
 })
 
-export type Person = z.infer<typeof personSchema> & {
+export type PersonFormSchema = z.infer<typeof personFormSchema>
+
+export type Person = PersonFormSchema & {
     id: number,
     contacts: Contact[]
 }

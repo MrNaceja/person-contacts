@@ -5,18 +5,45 @@ import { Label } from '@/components/ui/label';
 import { Check } from 'lucide-react';
 import { useForm, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useCallback, type ChangeEvent, type PropsWithChildren } from 'react';
+import { useCallback, useState, type ChangeEvent, type PropsWithChildren } from 'react';
 import { Formatters } from '@/utils/formatters';
-import { personSchema, type Person } from '@/models/person';
+import { personFormSchema, type Person, type PersonFormSchema } from '@/models/person';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { axios } from '@/lib/axios';
 
 interface PersonModal extends PropsWithChildren {
     person?: Person
 }
 export function PersonModal({ children, person }: PersonModal) {
+    const [isModalOpened, setIsModalOpened] = useState(false)
+    const queryClient = useQueryClient()
+
+    const createPersonMutation = useMutation({
+        async mutationFn(newPerson: PersonFormSchema) {
+            await new Promise(ok => setTimeout(ok, 2000))
+            await axios.post('/person', newPerson)
+        },
+        onSuccess() {
+            queryClient.invalidateQueries({ queryKey: ['persons'] })
+            personForm.reset()
+        }
+    })
+
+    const editPersonMutation = useMutation({
+        async mutationFn(editedPerson: PersonFormSchema) {
+            await axios.put(`/person/${person!.id}`, editedPerson)
+        },
+        onSuccess() {
+            queryClient.invalidateQueries({ queryKey: ['persons'] })
+            setIsModalOpened(false)
+        }
+    })
+
     const isEditionMode = !!person
 
-    const personForm = useForm<Person>({
-        resolver: zodResolver(personSchema),
+    const personForm = useForm<PersonFormSchema>({
+        resolver: zodResolver(personFormSchema),
         defaultValues: {
             name: person?.name,
             cpf: person?.cpf
@@ -27,22 +54,43 @@ export function PersonModal({ children, person }: PersonModal) {
         e.target.value = Formatters.cpf(e.target.value)
     }, [])
 
-    const handleConfirm: SubmitHandler<Person> = useCallback((personConfirmed) => {
-        if ( isEditionMode ) {
-            // Handle edit
-            return 
+    const handleConfirm: SubmitHandler<PersonFormSchema> = useCallback((personConfirmed) => {
+        if (isEditionMode) {
+            const editPromise = editPersonMutation.mutateAsync(personConfirmed)
+            toast.promise(editPromise, {
+                loading: 'Atualiando dados da pessoa...',
+                success: 'Pessoa editada com sucesso!',
+                error: () => ({
+                    message: 'Problemas ao editar a pessoa.',
+                    description: editPersonMutation.error?.message
+                })
+            })
+            return
         }
 
-        // handle creation
-    }, [ isEditionMode ])
+        const createPromise = createPersonMutation.mutateAsync(personConfirmed)
+        toast.promise(createPromise, {
+            loading: 'Criando pessoa...',
+            success: 'Pessoa criada com sucesso!',
+            error: () => ({
+                message: 'Problemas ao criar a pessoa.',
+                description: createPersonMutation.error?.message
+            })
+        })
+    }, [isEditionMode, createPersonMutation, editPersonMutation])
 
-    const onCloseModal = useCallback((open: boolean) => {
-        if ( open ) return
+    const onModalStateChange = useCallback((open: boolean) => {
+        if ( createPersonMutation.isPending || editPersonMutation.isPending ) {
+            toast.warning('Aguarde a confirmação dos dados...')
+            return 
+        }
+        setIsModalOpened(open)
+        if (open) return
         personForm.reset()
-    }, [ personForm ])
+    }, [personForm, createPersonMutation, editPersonMutation])
 
     return (
-        <Dialog onOpenChange={onCloseModal}>
+        <Dialog onOpenChange={onModalStateChange} open={isModalOpened}>
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
@@ -96,7 +144,7 @@ export function PersonModal({ children, person }: PersonModal) {
                         </p>
                     </div>
 
-                    <Button size='lg' type='submit'>
+                    <Button size='lg' type='submit' disabled={createPersonMutation.isPending || editPersonMutation.isPending}>
                         <Check />
                         Confirmar
                     </Button>
