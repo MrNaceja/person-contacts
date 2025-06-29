@@ -20,6 +20,14 @@ class ContactsDAL extends BaseDAL {
         }).returning().then(affected => affected.at(0)) as Contact
     }
 
+    async all() {
+        return await this.db.query.contacts.findMany({
+            with: {
+                person: true
+            }
+        })
+    }
+
     async update({ id, payload }: { id: Contact['id'], payload: Partial<Omit<Contact, 'id'>> }) {
         await this.db.update(contacts).set(payload).where(eq(contacts.id, id))
     }
