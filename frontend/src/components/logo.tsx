@@ -1,12 +1,12 @@
 import logo from '@/assets/logo.png'
-import { cx } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
 
 interface LogoProps {
     dir?: 'horizontal' | 'vertical'
 }
 export function Logo({ dir = 'horizontal' }: LogoProps) {
     return (
-        <figure className={cx('flex items-center gap-1', {
+        <figure className={cn('flex items-center gap-1', {
             horizontal: 'flex-row',
             vertical: 'flex-col'
         }[dir])}>

@@ -14,7 +14,7 @@ import {
 import { Logo } from '@/components/logo'
 import { LogOut } from 'lucide-react'
 import { NavLink } from 'react-router'
-import { cx } from 'class-variance-authority'
+import { cn } from '@/lib/utils'
 
 // Navigation links array to be used in both desktop and mobile menus
 const navigationLinks = [
@@ -87,7 +87,7 @@ export function Header() {
                                     <NavigationMenuItem key={link.href} className="h-full">
                                         <NavLink
                                             to={link.href}
-                                            className={({ isActive }) => cx(
+                                            className={({ isActive }) => cn(
                                                 'text-muted-foreground hover:text-primary hover:border-b-primary h-full justify-center rounded-none border-y-2 border-transparent py-1.5 font-medium hover:bg-transparent ',
                                                 {
                                                     'bg-transparent! border-b-primary': isActive
