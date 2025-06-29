@@ -4,6 +4,7 @@ import { ContactPage } from '@/pages/contact/page'
 import { PersonPage } from '@/pages/person/page'
 import { AuthPage } from '@/pages/auth/page'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
 export function App() {
@@ -18,6 +19,7 @@ export function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster richColors />
     </QueryClientProvider>
   )
 }
