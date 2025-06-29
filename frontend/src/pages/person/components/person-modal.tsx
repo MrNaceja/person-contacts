@@ -13,9 +13,10 @@ import { toast } from 'sonner';
 import { axios } from '@/lib/axios';
 
 interface PersonModal extends PropsWithChildren {
-    person?: Person
+    person?: Person,
+    readOnlyMode?: boolean
 }
-export function PersonModal({ children, person }: PersonModal) {
+export function PersonModal({ children, person, readOnlyMode = false }: PersonModal) {
     const [isModalOpened, setIsModalOpened] = useState(false)
     const queryClient = useQueryClient()
 
@@ -46,7 +47,8 @@ export function PersonModal({ children, person }: PersonModal) {
         defaultValues: {
             name: person?.name,
             cpf: person?.cpf
-        }
+        },
+        disabled: readOnlyMode
     })
 
     const onChangeInputCpf = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -79,9 +81,9 @@ export function PersonModal({ children, person }: PersonModal) {
     }, [isEditionMode, createPersonMutation, editPersonMutation])
 
     const onModalStateChange = useCallback((open: boolean) => {
-        if ( createPersonMutation.isPending || editPersonMutation.isPending ) {
+        if (createPersonMutation.isPending || editPersonMutation.isPending) {
             toast.warning('Aguarde a confirmação dos dados...')
-            return 
+            return
         }
         setIsModalOpened(open)
         if (open) return
@@ -97,17 +99,22 @@ export function PersonModal({ children, person }: PersonModal) {
                 <DialogHeader>
                     <DialogTitle>
                         {
-                            isEditionMode
-                                ? 'Editar Pessoa'
-                                : 'Nova Pessoa'
+                            readOnlyMode
+                                ? 'Dados da Pessoa'
+                                : (
+                                    isEditionMode
+                                        ? 'Editar Pessoa'
+                                        : 'Nova Pessoa'
+                                )
                         }
                     </DialogTitle>
                     <DialogClose />
                 </DialogHeader>
                 <form className='flex flex-col gap-4' onSubmit={personForm.handleSubmit(handleConfirm)}>
                     <div className='flex flex-col gap-2'>
-                        <Label aria-required>Nome:</Label>
+                        <Label aria-required htmlFor='name-field'>Nome:</Label>
                         <Input
+                            id='name-field'
                             placeholder='seu lindo nome...'
                             type='text'
                             {...personForm.register('name')}
@@ -123,8 +130,9 @@ export function PersonModal({ children, person }: PersonModal) {
                         </p>
                     </div>
                     <div className='flex flex-col gap-2'>
-                        <Label aria-required>CPF:</Label>
+                        <Label aria-required htmlFor='cpf-field'>CPF:</Label>
                         <Input
+                            id='cpf-field'
                             placeholder='xxx.xxx.xxx-xx'
                             type='text'
                             {...personForm.register('cpf', {
@@ -143,10 +151,14 @@ export function PersonModal({ children, person }: PersonModal) {
                         </p>
                     </div>
 
-                    <Button size='lg' type='submit' disabled={createPersonMutation.isPending || editPersonMutation.isPending}>
-                        <Check />
-                        Confirmar
-                    </Button>
+                    {
+                        !readOnlyMode && (
+                            <Button size='lg' type='submit' disabled={createPersonMutation.isPending || editPersonMutation.isPending}>
+                                <Check />
+                                Confirmar
+                            </Button>
+                        )
+                    }
                 </form>
             </DialogContent>
         </Dialog>

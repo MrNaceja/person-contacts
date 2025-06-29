@@ -2,31 +2,25 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Edit, LoaderCircle, Plus, Trash, UserX } from 'lucide-react';
+import { Edit, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { PersonModal } from '@/pages/person/components/person-modal';
 import type { Person } from '@/models/person';
+import type { Contact } from '@/models/contact';
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner"
 import { useCallback, useEffect, type FormEvent } from 'react';
 import { axios } from '@/lib/axios';
 import { useQueryState } from 'nuqs'
-import { cx } from 'class-variance-authority';
+import { ContactModal } from '@/pages/contact/components/contact-modal'
+import { Loading } from '@/components/loading';
+import { EmptyState } from '@/components/empty-state';
+import { personsQuery } from '@/utils/query';
 
 export function PersonPage() {
     const queryClient = useQueryClient()
     const [searchPersonName, setSearchPersonName] = useQueryState('name')
-    const { data: persons, isPending, isError, error } = useQuery({
-        queryKey: ['persons'],
-        queryFn: async () => {
-            const result = await axios.get<Person[]>('/person', {
-                params: {
-                    name: searchPersonName
-                }
-            })
-            return result.data
-        }
-    })
+    const { data: persons, isPending, isError, error } = useQuery(personsQuery(searchPersonName))
 
     const deletePersonMutation = useMutation({
         async mutationFn(id: Person['id']) {
@@ -34,6 +28,15 @@ export function PersonPage() {
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['persons'] })
+        }
+    })
+
+    const deleteContactMutation = useMutation({
+        async mutationFn(id: Contact['id']) {
+            await axios.delete(`/contact/${id}`)
+        },
+        onSuccess() {
+            queryClient.invalidateQueries()
         }
     })
 
@@ -45,6 +48,17 @@ export function PersonPage() {
             error: () => ({
                 message: 'Problemas ao deletar a pessoa.',
                 description: deletePersonMutation.error?.message
+            })
+        })
+    }
+    const withHandleDeleteContact = (id: Person['id']) => () => {
+        const deletePromise = deleteContactMutation.mutateAsync(id)
+        toast.promise(deletePromise, {
+            loading: 'Deletando Contato...',
+            success: 'Contato deletado com sucesso.',
+            error: () => ({
+                message: 'Problemas ao deletar o contato.',
+                description: deleteContactMutation.error?.message
             })
         })
     }
@@ -70,8 +84,12 @@ export function PersonPage() {
     }, [isError, error])
     return (
         <div className='flex flex-col container gap-6 flex-1'>
-            <h1 className='text-2xl font-bold'>Gerenciamento de Pessoas</h1>
-            <p className={cx('text-muted-foreground', { 'hidden': !searchPersonName })}>Buscando por "{searchPersonName}"</p>
+            <div className='flex flex-col gap-1'>
+                <h1 className='text-2xl font-bold'>Gerenciamento de Pessoas</h1>
+                 {
+                    hasPersons && <p className='text-sm text-muted-foreground'>{persons!.length} pessoa(s) encontrada(s)</p>
+                }
+            </div>
             <div className='flex items-center gap-2 justify-between'>
                 <PersonModal>
                     <Button size="lg">
@@ -81,27 +99,16 @@ export function PersonPage() {
                 </PersonModal>
                 <search className='flex-1 md:max-w-96'>
                     <form className='flex items-center gap-2' onSubmit={handleSubmitSearch}>
-                        <Input placeholder='Filtrar por nome...' type='search' onChange={(e) => setSearchPersonName(e.target.value || null)} />
+                        <Input placeholder='Filtrar por nome... (Enter para confirmar)' type='search' onChange={(e) => setSearchPersonName(e.target.value || null)} />
                     </form>
                 </search>
             </div>
             {
                 isPending
-                    ? ( // Loading State
-                        <div className='flex items-center justify-center gap-2 flex-col min-h-96 flex-1'>
-                            <LoaderCircle size={72} className='text-muted-foreground animate-spin' />
-                            <h3 className='text-2xl font-semibold'>Carregando pessoas...</h3>
-                        </div>
-                    )
+                    ? <Loading message='Carregando pessoas...'/>
                     : (
                         !hasPersons
-                            ? ( // Empty State
-                                <div className='flex items-center justify-center gap-2 flex-col min-h-96 flex-1'>
-                                    <UserX size={72} className='text-muted-foreground' />
-                                    <h3 className='text-2xl font-semibold'>Ainda não há pessoas cadastradas</h3>
-                                    <p className='text-sm text-muted-foreground'>Adicione uma nova pessoa atráves do botão "Nova Pessoa"</p>
-                                </div>
-                            )
+                            ? <EmptyState icon='users' title='Ainda não há pessoas cadastradas' description='Adicione uma nova pessoa atráves do botão "Nova Pessoa"'/>
                             : (
                                 <ul className='grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
                                     {
@@ -129,10 +136,12 @@ export function PersonPage() {
                                                     <CardContent>
                                                         <header className='flex justify-between items-center py-3'>
                                                             <span className='text-base font-semibold'>Contatos ({person.contacts.length})</span>
-                                                            <Button size="sm">
-                                                                <Plus />
-                                                                Adicionar
-                                                            </Button>
+                                                            <ContactModal person={person.id}>
+                                                                <Button size="sm">
+                                                                    <Plus />
+                                                                    Adicionar
+                                                                </Button>
+                                                            </ContactModal>
                                                         </header>
                                                         <ul className='flex flex-col gap-2'>
                                                             {
@@ -159,10 +168,12 @@ export function PersonPage() {
                                                                                     </Badge>
                                                                                 </span>
                                                                                 <CardAction className='flex items-center gap-2'>
-                                                                                    <Button size="icon" variant="outline">
-                                                                                        <Edit />
-                                                                                    </Button>
-                                                                                    <Button size="icon" variant="outline">
+                                                                                    <ContactModal contact={contact}>
+                                                                                        <Button size="icon" variant="outline">
+                                                                                            <Edit />
+                                                                                        </Button>
+                                                                                    </ContactModal>
+                                                                                    <Button size="icon" variant="outline" onClick={withHandleDeleteContact(contact.id)}>
                                                                                         <Trash />
                                                                                     </Button>
                                                                                 </CardAction>

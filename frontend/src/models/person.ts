@@ -15,6 +15,9 @@ export const personFormSchema = z.object({
 export type PersonFormSchema = z.infer<typeof personFormSchema>
 
 export type Person = PersonFormSchema & {
-    id: number,
+    id: number
+}
+
+export type PersonWithContacts = Person & {
     contacts: Contact[]
 }
