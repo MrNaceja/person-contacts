@@ -13,7 +13,7 @@ server
 
 server
     .register(routes)
-    .register(cors, { origin: '*' })
+    .register(cors, { origin: '*', methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS' })
     .register(jwt, {
         secret: process.env.JWT_SECRET
     })
