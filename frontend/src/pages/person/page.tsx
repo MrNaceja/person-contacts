@@ -8,16 +8,23 @@ import type { Person } from '@/models/person';
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner"
-import { useEffect } from 'react';
+import { useCallback, useEffect, type FormEvent } from 'react';
 import { axios } from '@/lib/axios';
+import { useQueryState } from 'nuqs'
+import { cx } from 'class-variance-authority';
 
 export function PersonPage() {
     const queryClient = useQueryClient()
+    const [searchPersonName, setSearchPersonName] = useQueryState('name')
     const { data: persons, isPending, isError, error } = useQuery({
         queryKey: ['persons'],
         queryFn: async () => {
-            const { data: personsFetched } = await axios.get<Person[]>('/person')
-            return personsFetched
+            const result = await axios.get<Person[]>('/person', {
+                params: {
+                    name: searchPersonName
+                }
+            })
+            return result.data
         }
     })
 
@@ -42,8 +49,18 @@ export function PersonPage() {
         })
     }
 
+    const handleSubmitSearch = useCallback((e: FormEvent) => {
+        e.preventDefault()
+        queryClient.invalidateQueries({ queryKey: ['persons'] })
+    }, [queryClient])
+
     const hasPersons = persons && persons.length > 0
 
+    useEffect(() => {
+        if (!searchPersonName) {
+            queryClient.invalidateQueries({ queryKey: ['persons'] })
+        }
+    }, [searchPersonName, queryClient])
     useEffect(() => {
         if (isError) {
             toast.error('Problemas ao carregar as pessoas.', {
@@ -54,6 +71,7 @@ export function PersonPage() {
     return (
         <div className='flex flex-col container gap-6 flex-1'>
             <h1 className='text-2xl font-bold'>Gerenciamento de Pessoas</h1>
+            <p className={cx('text-muted-foreground', { 'hidden': !searchPersonName })}>Buscando por "{searchPersonName}"</p>
             <div className='flex items-center gap-2 justify-between'>
                 <PersonModal>
                     <Button size="lg">
@@ -62,8 +80,8 @@ export function PersonPage() {
                     </Button>
                 </PersonModal>
                 <search className='flex-1 md:max-w-96'>
-                    <form className='flex items-center gap-2'>
-                        <Input placeholder='Filtrar por nome...' type='search' />
+                    <form className='flex items-center gap-2' onSubmit={handleSubmitSearch}>
+                        <Input placeholder='Filtrar por nome...' type='search' onChange={(e) => setSearchPersonName(e.target.value || null)} />
                     </form>
                 </search>
             </div>

@@ -5,11 +5,14 @@ import { PersonPage } from '@/pages/person/page'
 import { AuthPage } from '@/pages/auth/page'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from "@/components/ui/sonner"
+import { NuqsAdapter } from 'nuqs/adapters/react'
+import type { PropsWithChildren } from 'react';
 
 const queryClient = new QueryClient()
+
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <Providers>
       <BrowserRouter>
         <Routes>
           <Route path="/" index element={<AuthPage />} />
@@ -19,7 +22,17 @@ export function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-      <Toaster richColors />
-    </QueryClientProvider>
+    </Providers>
+  )
+}
+
+function Providers({ children }: PropsWithChildren) {
+  return (
+    <NuqsAdapter>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <Toaster richColors />
+      </QueryClientProvider>
+    </NuqsAdapter>
   )
 }

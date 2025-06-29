@@ -21,7 +21,6 @@ export function PersonModal({ children, person }: PersonModal) {
 
     const createPersonMutation = useMutation({
         async mutationFn(newPerson: PersonFormSchema) {
-            await new Promise(ok => setTimeout(ok, 2000))
             await axios.post('/person', newPerson)
         },
         onSuccess() {
