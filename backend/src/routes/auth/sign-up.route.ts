@@ -26,5 +26,5 @@ export const signUpRoute = async (server: FastifyInstanceWithZod) => server.post
 
     const authToken = server.jwt.sign({...userCreated}, { expiresIn: '1d' })
 
-    return rep.status(StatusCodes.CREATED).send({ id: userCreated.id, token: authToken })
+    return rep.status(StatusCodes.CREATED).send({ use: userCreated, token: authToken })
 })

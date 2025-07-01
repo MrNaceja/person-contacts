@@ -1,0 +1,1 @@
+export const lazy = (delay: number = 2000) => new Promise(ok => setTimeout(ok, delay)) 

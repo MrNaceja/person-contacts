@@ -10,7 +10,7 @@ import { Formatters } from '@/utils/formatters';
 import { personFormSchema, type Person, type PersonFormSchema } from '@/models/person';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { axios } from '@/lib/axios';
+import { PersonService } from '@/services/person-contacts/person';
 
 interface PersonModal extends PropsWithChildren {
     person?: Person,
@@ -22,7 +22,7 @@ export function PersonModal({ children, person, readOnlyMode = false }: PersonMo
 
     const createPersonMutation = useMutation({
         async mutationFn(newPerson: PersonFormSchema) {
-            await axios.post('/person', newPerson)
+           await PersonService.create(newPerson)
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['persons'] })
@@ -32,7 +32,7 @@ export function PersonModal({ children, person, readOnlyMode = false }: PersonMo
 
     const editPersonMutation = useMutation({
         async mutationFn(editedPerson: PersonFormSchema) {
-            await axios.put(`/person/${person!.id}`, editedPerson)
+            await PersonService.edit(person!.id, editedPerson)
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['persons'] })

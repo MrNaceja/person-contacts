@@ -11,11 +11,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Formatters } from '@/utils/formatters';
 import type { Person } from '@/models/person';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { axios } from '@/lib/axios';
 import { toast } from 'sonner';
 import { Loading } from '@/components/loading';
-import { personsQuery } from '@/utils/query';
 import { Badge } from '@/components/ui/badge';
+import { ContactService } from '@/services/person-contacts/contact';
+import { personsQuery } from '@/services/person-contacts/person';
 
 interface ContactModalProps extends PropsWithChildren {
     person?: Person['id'],
@@ -42,7 +42,7 @@ export function ContactModal({ children, contact, person }: ContactModalProps) {
 
     const createContactMutation = useMutation({
         async mutationFn(newContact: ContactFormSchema) {
-            await axios.post('/contact', newContact)
+            await ContactService.create(newContact)
         },
         onSuccess() {
             queryClient.invalidateQueries()
@@ -52,7 +52,7 @@ export function ContactModal({ children, contact, person }: ContactModalProps) {
 
     const editContactMutation = useMutation({
         async mutationFn(editedContact: ContactFormSchema) {
-            await axios.put(`/contact/${contact!.id}`, editedContact)
+            await ContactService.edit(contact!.id, editedContact)
         },
         onSuccess() {
             queryClient.invalidateQueries()

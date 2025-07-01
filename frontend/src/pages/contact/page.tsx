@@ -4,28 +4,22 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Edit, Eye, LoaderCircle, Plus, Trash, User } from 'lucide-react';
 import { ContactModal } from './components/contact-modal';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { axios } from '@/lib/axios';
-import type { Contact, ContactWithPerson } from '@/models/contact';
+import type { Contact } from '@/models/contact';
 import { useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Loading } from '@/components/loading';
 import { EmptyState } from '@/components/empty-state';
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic';
 import { PersonModal } from '../person/components/person-modal';
+import { ContactService, contactsQuery } from '@/services/person-contacts/contact';
 
 export function ContactPage() {
     const queryClient = useQueryClient()
-    const { data: contacts, isPending, isError, error } = useQuery({
-        queryKey: ['contacts'],
-        async queryFn() {
-            const result = await axios.get<ContactWithPerson[]>('/contact')
-            return result.data
-        }
-    })
+    const { data: contacts, isPending, isError, error } = useQuery(contactsQuery())
 
     const deleteContactMutation = useMutation({
         async mutationFn(id: Contact['id']) {
-            await axios.delete(`/contact/${id}`)
+           await ContactService.delete(id)
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['contacts'] })

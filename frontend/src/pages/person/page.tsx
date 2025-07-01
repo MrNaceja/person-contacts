@@ -9,22 +9,33 @@ import type { Contact } from '@/models/contact';
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner"
-import { useCallback, useEffect, type FormEvent } from 'react';
-import { axios } from '@/lib/axios';
-import { useQueryState } from 'nuqs'
+import { useCallback, useEffect } from 'react';
 import { ContactModal } from '@/pages/contact/components/contact-modal'
 import { Loading } from '@/components/loading';
 import { EmptyState } from '@/components/empty-state';
-import { personsQuery } from '@/utils/query';
+import { useForm, type SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { ContactService } from '@/services/person-contacts/contact';
+import { PersonService, personsQuery } from '@/services/person-contacts/person';
+
+const filterSchema = z.object({
+    personName: z.string().optional()
+})
+
+type FilterSchema = z.infer<typeof filterSchema>
 
 export function PersonPage() {
     const queryClient = useQueryClient()
-    const [searchPersonName, setSearchPersonName] = useQueryState('name')
-    const { data: persons, isPending, isError, error } = useQuery(personsQuery(searchPersonName))
+    const filterForm = useForm<FilterSchema>({
+        resolver: zodResolver(filterSchema)
+    })
+    const personNameFilter = filterForm.watch('personName')
+    const { data: persons, isPending, isError, error } = useQuery(personsQuery(personNameFilter))
 
     const deletePersonMutation = useMutation({
         async mutationFn(id: Person['id']) {
-            await axios.delete(`/person/${id}`)
+            await PersonService.delete(id)
         },
         onSuccess() {
             queryClient.invalidateQueries({ queryKey: ['persons'] })
@@ -33,7 +44,7 @@ export function PersonPage() {
 
     const deleteContactMutation = useMutation({
         async mutationFn(id: Contact['id']) {
-            await axios.delete(`/contact/${id}`)
+            await ContactService.delete(id)
         },
         onSuccess() {
             queryClient.invalidateQueries()
@@ -63,18 +74,17 @@ export function PersonPage() {
         })
     }
 
-    const handleSubmitSearch = useCallback((e: FormEvent) => {
-        e.preventDefault()
+    const handleSearchFilter: SubmitHandler<FilterSchema> = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ['persons'] })
     }, [queryClient])
 
     const hasPersons = persons && persons.length > 0
 
     useEffect(() => {
-        if (!searchPersonName) {
+        if (!personNameFilter) {
             queryClient.invalidateQueries({ queryKey: ['persons'] })
         }
-    }, [searchPersonName, queryClient])
+    }, [personNameFilter, queryClient])
     useEffect(() => {
         if (isError) {
             toast.error('Problemas ao carregar as pessoas.', {
@@ -86,9 +96,9 @@ export function PersonPage() {
         <div className='flex flex-col container gap-6 flex-1'>
             <div className='flex flex-col gap-1'>
                 <h1 className='text-2xl font-bold'>Gerenciamento de Pessoas</h1>
-                 {
-                    hasPersons && <p className='text-sm text-muted-foreground'>{persons!.length} pessoa(s) encontrada(s)</p>
-                }
+                <p className='text-sm text-muted-foreground'>
+                    {persons?.length || 0} pessoa(s) encontrada(s)
+                </p>
             </div>
             <div className='flex items-center gap-2 justify-between'>
                 <PersonModal>
@@ -98,19 +108,19 @@ export function PersonPage() {
                     </Button>
                 </PersonModal>
                 <search className='flex-1 md:max-w-96'>
-                    <form className='flex items-center gap-2' onSubmit={handleSubmitSearch}>
-                        <Input placeholder='Filtrar por nome... (Enter para confirmar)' type='search' onChange={(e) => setSearchPersonName(e.target.value || null)} />
+                    <form className='flex items-center gap-2' onSubmit={filterForm.handleSubmit(handleSearchFilter)}>
+                        <Input placeholder='Filtrar por nome... (Enter para confirmar)' type='search' {...filterForm.register('personName')} />
                     </form>
                 </search>
             </div>
             {
                 isPending
-                    ? <Loading message='Carregando pessoas...'/>
+                    ? <Loading message='Carregando pessoas...' />
                     : (
                         !hasPersons
-                            ? <EmptyState icon='users' title='Ainda não há pessoas cadastradas' description='Adicione uma nova pessoa atráves do botão "Nova Pessoa"'/>
+                            ? <EmptyState icon='users' title='Ainda não há pessoas cadastradas' description='Adicione uma nova pessoa atráves do botão "Nova Pessoa"' />
                             : (
-                                <ul className='grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4'>
+                                <ul className='grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 flex-1'>
                                     {
                                         persons.map(person => (
                                             <li key={person.id}>

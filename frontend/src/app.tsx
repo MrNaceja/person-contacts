@@ -5,34 +5,38 @@ import { PersonPage } from '@/pages/person/page'
 import { AuthPage } from '@/pages/auth/page'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from "@/components/ui/sonner"
-import { NuqsAdapter } from 'nuqs/adapters/react'
 import type { PropsWithChildren } from 'react';
+import { AuthProvider } from '@/providers/auth/provider';
+import { RoutesWithAuth } from './providers/auth/routes';
 
 const queryClient = new QueryClient()
 
 export function App() {
   return (
     <Providers>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" index element={<AuthPage />} />
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route element={<RoutesWithAuth />}>
+          <Route index element />
           <Route element={<Layout />}>
             <Route path="/person" element={<PersonPage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </Providers>
+        </Route>
+      </Routes>
+    </Providers >
   )
 }
 
 function Providers({ children }: PropsWithChildren) {
   return (
-    <NuqsAdapter>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <Toaster richColors />
-      </QueryClientProvider>
-    </NuqsAdapter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </BrowserRouter>
+      <Toaster richColors />
+    </QueryClientProvider>
   )
 }

@@ -28,6 +28,6 @@ export const signInRoute = async (server: FastifyInstanceWithZod) => server.post
 
     const authToken = server.jwt.sign({...userWithEmail}, { expiresIn: '1d' })
 
-    return rep.status(StatusCodes.OK).send({ token: authToken })
+    return rep.status(StatusCodes.OK).send({ user: userWithEmail, token: authToken })
 
 })

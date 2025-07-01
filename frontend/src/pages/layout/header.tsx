@@ -15,19 +15,21 @@ import { Logo } from '@/components/logo'
 import { LogOut } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/providers/auth/hook'
 
-// Navigation links array to be used in both desktop and mobile menus
 const navigationLinks = [
-    { href: "/person", label: "Persons" },
-    { href: "/contact", label: "Contacts" }
+    { href: "/person", label: "Pessoas" },
+    { href: "/contact", label: "Contatos" }
 ]
 
 export function Header() {
+    const { signOut } = useAuth()
+
     return (
         <header className="border-b px-4">
             <div className="flex h-16 justify-between gap-4 container">
                 {/* Left side */}
-                <Logo />
+                <Logo size='sm'/>
 
                 {/* Right side */}
                 <div className="flex gap-3 items-center">
@@ -101,7 +103,7 @@ export function Header() {
                             </NavigationMenuList>
                         </NavigationMenu>
                     </div>
-                    <Button>
+                    <Button onClick={signOut}>
                         <LogOut />
                         <span className='max-md:hidden'>Sair</span>
                     </Button>

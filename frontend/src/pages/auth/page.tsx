@@ -6,7 +6,7 @@ import { SignUpForm } from '@/pages/auth/components/sign-up-form'
 
 export function AuthPage() {
     return (
-        <section className="min-h-screen grid grid-cols-1 grid-rows-2 lg:grid-cols-[1fr_minmax(600px,auto)] lg:grid-rows-1">
+        <section className="min-h-screen grid grid-cols-1 lg:grid-cols-[1fr_minmax(600px,auto)] lg:grid-rows-1">
             {/* Banner */}
             <div
                 className={`
@@ -14,7 +14,7 @@ export function AuthPage() {
                     flex items-center justify-center flex-col
                 `}
             >
-                <Logo dir="vertical"/>
+                <Logo dir="vertical" size="lg"/>
             </div>
             
             {/* Auth Forms */}
