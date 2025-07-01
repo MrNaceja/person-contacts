@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { AuthService } from './auth';
 
-const BACKEND_URL = 'http://127.0.0.1:3000'
+const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000'
 
 export type ApiPersonContactsError = {
   message: string,
