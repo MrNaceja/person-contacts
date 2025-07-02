@@ -34,9 +34,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         toast.promise(signInPromise, {
             loading: 'Autenticando...',
             success: 'Autenticado com sucesso!',
-            error: () => ({
+            error: (err) => ({
                 message: 'Problemas ao autenticar',
-                description: signInMutation.error?.message
+                description: (err as ApiPersonContactsError).message
             })
         })
     }, [signInMutation])
@@ -46,9 +46,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         toast.promise(signUpPromise, {
             loading: 'Registrando...',
             success: 'Registrado com sucesso!',
-            error: () => ({
+            error: (err) => ({
                 message: 'Problemas ao registrar',
-                description: signUpMutation.error?.message
+                description: (err as ApiPersonContactsError).message
             })
         })
     }, [signUpMutation])
@@ -60,16 +60,32 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }, [goToAuth])
 
     useEffect(() => {
-        const interceptorId = api.interceptors.response.use(
+        const authenticatedRequestsInterceptorId = api.interceptors.request.use((config) => {
+            const isPublic = ['/auth/sign-in', '/auth/sign-up'].some((url) =>
+                config.url?.includes(url)
+            );
+
+            if (!isPublic) {
+                const authToken = AuthService.catchToken()
+                if (authToken) {
+                    config.headers.Authorization = `Bearer ${authToken}`
+                }
+            }
+            return config
+        })
+        const unhautorizedResponseErrorInterceptorId = api.interceptors.response.use(
             (res) => res,
             (error: ApiPersonContactsError) => {
                 if (error.status == 401) {
                     signOut()
                 }
-                return error
+                return Promise.reject(error)
             }
         )
-        return () => api.interceptors.response.eject(interceptorId)
+        return () => {
+            api.interceptors.request.eject(authenticatedRequestsInterceptorId)
+            api.interceptors.response.eject(unhautorizedResponseErrorInterceptorId)
+        }
     }, [navigate, goToAuth, signOut])
     return (
         <AuthContext.Provider

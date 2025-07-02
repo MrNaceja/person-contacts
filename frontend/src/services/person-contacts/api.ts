@@ -1,7 +1,6 @@
 import axios, { AxiosError } from 'axios'
-import { AuthService } from './auth';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:3000'
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:3000'
 
 export type ApiPersonContactsError = {
   message: string,
@@ -15,20 +14,6 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   }
 });
-
-api.interceptors.request.use((config) => {
-  const isPublic = ['/auth/sign-in', '/auth/sign-up'].some((url) =>
-    config.url?.includes(url)
-  );
-
-  if (!isPublic) {
-    const authToken = AuthService.catchToken()
-    if (authToken) {
-      config.headers.Authorization = `Bearer ${authToken}`
-    }
-  }
-  return config
-})
 
 api.interceptors.response.use(
   response => response,

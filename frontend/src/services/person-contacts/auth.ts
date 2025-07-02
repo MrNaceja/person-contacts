@@ -52,7 +52,7 @@ function clearAuthStore() {
 }
 
 export const AuthService = {
-    async signIn({ email, password }: AuthCredentials) {
+    async signIn({ email, password }: AuthCredentials){
         const { token, user } = (await api.post<AuthResponse>('/auth/sign-in', { email, password })).data
         storeToken(token)
         storeUser(user)
