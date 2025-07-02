@@ -22,4 +22,6 @@ COPY --from=builder /app/dist ./dist
 COPY /src/db/migrations ./dist/db/migrations
 COPY drizzle.config.ts ./
 
-CMD ["npm", "run", "start"]
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+CMD ["sh", "./entrypoint.sh"]
